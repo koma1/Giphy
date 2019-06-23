@@ -15,17 +15,16 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.giphy.sdk.core.models.Media;
 import com.giphy.sdk.core.models.enums.MediaType;
 import com.giphy.sdk.core.network.api.CompletionHandler;
-import com.giphy.sdk.core.network.api.GPHApi;
-import com.giphy.sdk.core.network.api.GPHApiClient;
 import com.giphy.sdk.core.network.response.ListMediaResponse;
+
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener {
     private RecyclerView recyclerView;
     private TextView tvSearchHint;
-
-    private static final String GIPHY_API_KEY = "4StA7nAEVDwNlFFbPeIMvIR1kJ83FTTP";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,13 +72,12 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         return true;
     }
 
-    private static final GPHApi client = new GPHApiClient(GIPHY_API_KEY);
-
-    private void searchGiphy(@NonNull String searchText) {
+    public void searchGiphy(@NonNull String searchText) {
         final Context ctx = this;
-        //ToDo: move to svc layer
-        Log.v("Search by: ", searchText);
-        client.search(searchText, MediaType.gif, null, null, null,
+
+        Log.v("searchGiphy(): ", searchText.toString());
+
+        GiphyService.client.search(searchText, MediaType.gif, null, null, null,
                 null, null, new CompletionHandler<ListMediaResponse>() {
                     @Override
                     public void onComplete(ListMediaResponse result, Throwable e) {
@@ -87,7 +85,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                             RVAdapter adapter = new RVAdapter(result.getData());
                             recyclerView.setAdapter(adapter);
                         } else
-                            Toast.makeText(ctx, R.string.app_name, Toast.LENGTH_SHORT);
+                            Toast.makeText(ctx, R.string.something_wrong, Toast.LENGTH_SHORT);
                     }
                 });
     }

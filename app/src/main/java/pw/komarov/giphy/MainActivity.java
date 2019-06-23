@@ -1,6 +1,5 @@
 package pw.komarov.giphy;
 
-import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -13,18 +12,16 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.giphy.sdk.core.models.Media;
+import com.felipecsl.gifimageview.library.GifImageView;
 import com.giphy.sdk.core.models.enums.MediaType;
 import com.giphy.sdk.core.network.api.CompletionHandler;
 import com.giphy.sdk.core.network.response.ListMediaResponse;
 
-import java.util.List;
-
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener {
     private RecyclerView recyclerView;
     private TextView tvSearchHint;
+    private GifImageView imgSearchProcessing;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,9 +30,9 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
         recyclerView = findViewById(R.id.recyclerView);
         tvSearchHint = findViewById(R.id.tvSearchHint);
+        imgSearchProcessing = findViewById(R.id.imgSearchProcessing);
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
-
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setHasFixedSize(true);
     }
@@ -52,20 +49,14 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     }
 
     @Override
-    public boolean onQueryTextChange(String s) {
-        System.out.printf("onQueryTextChange('%s');\n", s);
-        return false;
-    }
-
-    @Override
     public boolean onQueryTextSubmit(String s) {
-        if (s == "") {
+        if (s.isEmpty()) {
             recyclerView.setVisibility(View.INVISIBLE);
             tvSearchHint.setVisibility(View.VISIBLE);
         } else {
-            recyclerView.setVisibility(View.VISIBLE);
             tvSearchHint.setVisibility(View.INVISIBLE);
 
+            GifImageService.loadProcessingAnimation(imgSearchProcessing);
             searchGiphy(s);
         }
 
@@ -73,20 +64,31 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     }
 
     public void searchGiphy(@NonNull String searchText) {
-        final Context ctx = this;
+        final String TAG = "searchGiphy()";
 
-        Log.v("searchGiphy(): ", searchText.toString());
+        try {
+            Log.v(TAG, searchText);
+            GiphyService.client.search(searchText, MediaType.gif, null, null, null,
+                    null, null, new CompletionHandler<ListMediaResponse>() {
+                        @Override
+                        public void onComplete(ListMediaResponse result, Throwable e) {
+                            GifImageService.unloadProcessingAnimation(imgSearchProcessing);
+                            if (result != null) {
+                                RVAdapter adapter = new RVAdapter(result.getData());
+                                recyclerView.setAdapter(adapter); //ToDo: may be it need call in UI thread ctx?
+                                recyclerView.setVisibility(View.VISIBLE);
+                            } else {
+                                Log.e(TAG + "res null", e.getStackTrace().toString());
+                            }
+                        }
+                    });
+        } catch (Exception e) {
+            GifImageService.unloadProcessingAnimation(imgSearchProcessing);
+        }
+    }
 
-        GiphyService.client.search(searchText, MediaType.gif, null, null, null,
-                null, null, new CompletionHandler<ListMediaResponse>() {
-                    @Override
-                    public void onComplete(ListMediaResponse result, Throwable e) {
-                        if (result != null) {
-                            RVAdapter adapter = new RVAdapter(result.getData());
-                            recyclerView.setAdapter(adapter);
-                        } else
-                            Toast.makeText(ctx, R.string.something_wrong, Toast.LENGTH_SHORT);
-                    }
-                });
+    @Override
+    public boolean onQueryTextChange(String s) {
+        return false;
     }
 }

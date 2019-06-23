@@ -18,6 +18,9 @@ import com.giphy.sdk.core.models.enums.MediaType;
 import com.giphy.sdk.core.network.api.CompletionHandler;
 import com.giphy.sdk.core.network.response.ListMediaResponse;
 
+import pw.komarov.giphy.utils.GifImageService;
+import pw.komarov.giphy.utils.GiphyService;
+
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener {
     private RecyclerView recyclerView;
     private TextView tvSearchHint;
@@ -55,6 +58,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
             tvSearchHint.setVisibility(View.VISIBLE);
         } else {
             tvSearchHint.setVisibility(View.INVISIBLE);
+            recyclerView.setVisibility(View.VISIBLE);
 
             GifImageService.loadProcessingAnimation(imgSearchProcessing);
             searchGiphy(s);
@@ -68,7 +72,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
         try {
             Log.v(TAG, searchText);
-            GiphyService.client.search(searchText, MediaType.gif, null, null, null,
+            GiphyService.getClient().search(searchText, MediaType.gif, null, null, null,
                     null, null, new CompletionHandler<ListMediaResponse>() {
                         @Override
                         public void onComplete(ListMediaResponse result, Throwable e) {
@@ -76,14 +80,14 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                             if (result != null) {
                                 RVAdapter adapter = new RVAdapter(result.getData());
                                 recyclerView.setAdapter(adapter); //ToDo: may be it need call in UI thread ctx?
-                                recyclerView.setVisibility(View.VISIBLE);
                             } else {
-                                Log.e(TAG + "res null", e.getStackTrace().toString());
+                                Log.e(TAG + "[e.1]", e.getStackTrace().toString());
                             }
                         }
                     });
         } catch (Exception e) {
             GifImageService.unloadProcessingAnimation(imgSearchProcessing);
+            Log.e(TAG + "[e.2]", e.getStackTrace().toString());
         }
     }
 

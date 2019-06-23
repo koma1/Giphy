@@ -1,4 +1,4 @@
-package pw.komarov.giphy;
+package pw.komarov.giphy.utils;
 
 import android.content.res.Resources;
 import android.view.View;
@@ -9,6 +9,8 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+
+import pw.komarov.giphy.R;
 
 public class GifImageService {
     private static byte[] processingImageBytes;

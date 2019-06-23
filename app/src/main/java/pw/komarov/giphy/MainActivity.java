@@ -1,20 +1,31 @@
 package pw.komarov.giphy;
 
+import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SearchView;
+import android.util.Log;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.TextView;
+import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.giphy.sdk.core.models.enums.MediaType;
+import com.giphy.sdk.core.network.api.CompletionHandler;
+import com.giphy.sdk.core.network.api.GPHApi;
+import com.giphy.sdk.core.network.api.GPHApiClient;
+import com.giphy.sdk.core.network.response.ListMediaResponse;
 
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener {
     private RecyclerView recyclerView;
+    private TextView tvSearchHint;
+
+    private static final String GIPHY_API_KEY = "4StA7nAEVDwNlFFbPeIMvIR1kJ83FTTP";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,18 +33,12 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         setContentView(R.layout.activity_main);
 
         recyclerView = findViewById(R.id.recyclerView);
+        tvSearchHint = findViewById(R.id.tvSearchHint);
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setHasFixedSize(true);
-
-        initializeData();
-        initializeAdapter();
-    }
-
-    private void initializeAdapter() {
-        GiphyAdapter adapter = new GiphyAdapter(giphyItemList);
-        recyclerView.setAdapter(adapter);
     }
 
     @Override
@@ -55,15 +60,35 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
     @Override
     public boolean onQueryTextSubmit(String s) {
-        return false;
+        if (s == "") {
+            recyclerView.setVisibility(View.INVISIBLE);
+            tvSearchHint.setVisibility(View.VISIBLE);
+        } else {
+            recyclerView.setVisibility(View.VISIBLE);
+            tvSearchHint.setVisibility(View.INVISIBLE);
+
+            searchGiphy(s);
+        }
+
+        return true;
     }
 
-    private List<GiphyItem> giphyItemList;
+    private static final GPHApi client = new GPHApiClient(GIPHY_API_KEY);
 
-    private void initializeData() {
-        giphyItemList = new ArrayList<>();
-        giphyItemList.add(new GiphyItem("dogs laughing GIF by The BarkPost", "cLcxtL1z8t8oo"));
-        giphyItemList.add(new GiphyItem("dogs jumprope GIF", "fItgT774J3nWw"));
-        giphyItemList.add(new GiphyItem("star wars dogs GIF", "mokQK7oyiR8Sk"));
+    private void searchGiphy(@NonNull String searchText) {
+        final Context ctx = this;
+        //ToDo: move to svc layer
+        Log.v("Search by: ", searchText);
+        client.search(searchText, MediaType.gif, null, null, null,
+                null, null, new CompletionHandler<ListMediaResponse>() {
+                    @Override
+                    public void onComplete(ListMediaResponse result, Throwable e) {
+                        if (result != null) {
+                            RVAdapter adapter = new RVAdapter(result.getData());
+                            recyclerView.setAdapter(adapter);
+                        } else
+                            Toast.makeText(ctx, R.string.app_name, Toast.LENGTH_SHORT);
+                    }
+                });
     }
 }

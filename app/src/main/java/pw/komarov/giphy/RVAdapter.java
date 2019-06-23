@@ -2,12 +2,13 @@ package pw.komarov.giphy;
 
 import android.content.res.Resources;
 import android.support.annotation.NonNull;
-import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import com.giphy.sdk.core.models.Media;
 
 import com.felipecsl.gifimageview.library.GifImageView;
 
@@ -17,32 +18,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-public class GiphyAdapter extends RecyclerView.Adapter<GiphyAdapter.GiphyViewHolder> {
+public class RVAdapter extends RecyclerView.Adapter<RVAdapter.GiphyViewHolder> {
 
     private static byte[] processingImageBytes;
-//    static {
-//        Context ctx = GiphyApplication.getAppContext();
-//        Resources res = GiphyApplication.getAppContext().getResources();//giphyViewHolder.imgGif.getContext().getResources();
-//        InputStream inputStream = res.openRawResource(R.raw.processing);
-//        try {
-//            processingImageBytes = IOUtils.toByteArray(inputStream);
-//        } catch (IOException e) {
-//            throw new RuntimeException(e.getMessage());
-//        }
-//    }
-
     @NonNull
     @Override
     public GiphyViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
         View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.card_item, viewGroup, false);
-        GiphyViewHolder giphyViewHolder = new GiphyViewHolder(v);
-
-        return giphyViewHolder;
+        return new GiphyViewHolder(v);
     }
 
     @Override
     public void onBindViewHolder(@NonNull GiphyViewHolder giphyViewHolder, int i) {
-        if(processingImageBytes == null) {
+        if(processingImageBytes == null) { //ToDo: Make it static by app ctx
             Resources res = giphyViewHolder.imgGif.getContext().getResources();
             InputStream inputStream = res.openRawResource(R.raw.processing);
             try {
@@ -51,9 +39,10 @@ public class GiphyAdapter extends RecyclerView.Adapter<GiphyAdapter.GiphyViewHol
                 throw new RuntimeException(e.getMessage());
             }
         }
-        giphyViewHolder.tvDescription.setText(giphyItems.get(i).description);
-        giphyViewHolder.tvGiphyId.setText(giphyItems.get(i).imageId);
+        giphyViewHolder.tvGiphyId.setText(giphyItems.get(i).getId());
+        giphyViewHolder.tvDescription.setText(giphyItems.get(i).getTitle());
 
+        //show "processing" animation
         giphyViewHolder.imgGif.setBytes(processingImageBytes);
         giphyViewHolder.imgGif.startAnimation();
     }
@@ -64,29 +53,22 @@ public class GiphyAdapter extends RecyclerView.Adapter<GiphyAdapter.GiphyViewHol
     }
 
     public static class GiphyViewHolder extends RecyclerView.ViewHolder {
-        CardView cv;
-        TextView tvDescription;
-        TextView tvGiphyId;
-        GifImageView imgGif;
+        private TextView tvDescription;
+        private TextView tvGiphyId;
+        private GifImageView imgGif;
 
         GiphyViewHolder(View itemView) {
             super(itemView);
-            cv = itemView.findViewById(R.id.cv);
+
             tvDescription = itemView.findViewById(R.id.tvDescription);
             tvGiphyId = itemView.findViewById(R.id.tvGiphyId);
             imgGif = itemView.findViewById(R.id.imgGif);
         }
     }
 
-    private List<GiphyItem> giphyItems;
+    private List<Media> giphyItems;
 
-    GiphyAdapter(List<GiphyItem> giphyItems) {
+    RVAdapter(List<Media> giphyItems) {
         this.giphyItems = giphyItems;
     }
-
-    @Override
-    public void onAttachedToRecyclerView(RecyclerView recyclerView) {
-        super.onAttachedToRecyclerView(recyclerView);
-    }
-
 }

@@ -18,7 +18,11 @@ import com.giphy.sdk.core.models.enums.MediaType;
 import com.giphy.sdk.core.network.api.CompletionHandler;
 import com.giphy.sdk.core.network.response.ListMediaResponse;
 
-import pw.komarov.giphy.utils.GifImageService;
+import org.apache.commons.io.IOUtils;
+
+import java.io.IOException;
+import java.io.InputStream;
+
 import pw.komarov.giphy.utils.GiphyService;
 
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener {
@@ -26,73 +30,80 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private TextView tvSearchHint;
     private GifImageView imgSearchProcessing;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-
+    private void initContent() {
         recyclerView = findViewById(R.id.recyclerView);
         tvSearchHint = findViewById(R.id.tvSearchHint);
         imgSearchProcessing = findViewById(R.id.imgSearchProcessing);
+        imgSearchProcessing.setBytes(GiphyApp.getProcessingAnimationBytes());
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setHasFixedSize(true);
     }
 
+    protected void setSearchProcessing(boolean isShow) {
+        tvSearchHint.setVisibility((isShow) ? View.INVISIBLE : View.VISIBLE);
+        recyclerView.setVisibility((isShow) ? View.VISIBLE : View.INVISIBLE);
+        imgSearchProcessing.setVisibility((isShow) ? View.VISIBLE : View.INVISIBLE);
+        if(isShow)
+            imgSearchProcessing.startAnimation();
+    }
+
+    //ToDo: move to GiphyService
+    public void searchGiphy(@NonNull String searchText) {
+        final String TAG = "searchGiphy()";
+        if (!searchText.isEmpty()) {
+            try {
+                Log.v(TAG, searchText);
+                GiphyService.getClient().search(searchText, MediaType.gif, null, null, null,
+                        null, null, new CompletionHandler<ListMediaResponse>() {
+                            @Override
+                            public void onComplete(ListMediaResponse result, Throwable e) {
+                                imgSearchProcessing.setVisibility(View.INVISIBLE);
+                                if (result != null) {
+                                    RVAdapter adapter = new RVAdapter(result.getData());
+                                    recyclerView.setAdapter(adapter); //ToDo: may be it need call in UI thread ctx?
+                                } else {
+                                    Log.e(TAG + "[e.1]", e.getStackTrace().toString());
+                                }
+                            }
+                        });
+            } catch (Exception e) {
+                imgSearchProcessing.setVisibility(View.INVISIBLE);
+                Log.e(TAG + "[e.2]", e.getStackTrace().toString());
+            }
+        }
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        initContent();
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
 
-        MenuItem menuItem = menu.findItem(R.id.app_bar_search);
-        SearchView searchView = (SearchView) MenuItemCompat.getActionView(menuItem);
+        MenuItem searchItem = menu.findItem(R.id.app_bar_search);
+        SearchView searchView = (SearchView) searchItem.getActionView();
         searchView.setOnQueryTextListener(this);
 
         return true;
     }
 
     @Override
-    public boolean onQueryTextSubmit(String s) {
-        if (s.isEmpty()) {
-            recyclerView.setVisibility(View.INVISIBLE);
-            tvSearchHint.setVisibility(View.VISIBLE);
-        } else {
-            tvSearchHint.setVisibility(View.INVISIBLE);
-            recyclerView.setVisibility(View.VISIBLE);
-
-            GifImageService.loadProcessingAnimation(imgSearchProcessing);
-            searchGiphy(s);
-        }
-
-        return true;
-    }
-
-    public void searchGiphy(@NonNull String searchText) {
-        final String TAG = "searchGiphy()";
-
-        try {
-            Log.v(TAG, searchText);
-            GiphyService.getClient().search(searchText, MediaType.gif, null, null, null,
-                    null, null, new CompletionHandler<ListMediaResponse>() {
-                        @Override
-                        public void onComplete(ListMediaResponse result, Throwable e) {
-                            GifImageService.unloadProcessingAnimation(imgSearchProcessing);
-                            if (result != null) {
-                                RVAdapter adapter = new RVAdapter(result.getData());
-                                recyclerView.setAdapter(adapter); //ToDo: may be it need call in UI thread ctx?
-                            } else {
-                                Log.e(TAG + "[e.1]", e.getStackTrace().toString());
-                            }
-                        }
-                    });
-        } catch (Exception e) {
-            GifImageService.unloadProcessingAnimation(imgSearchProcessing);
-            Log.e(TAG + "[e.2]", e.getStackTrace().toString());
-        }
+    public boolean onQueryTextChange(String s) {
+        return false;
     }
 
     @Override
-    public boolean onQueryTextChange(String s) {
-        return false;
+    public boolean onQueryTextSubmit(String s) {
+        setSearchProcessing(!s.isEmpty());
+        searchGiphy(s);
+
+        return true;
     }
 }

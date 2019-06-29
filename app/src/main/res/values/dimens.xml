@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="animation_box_large">92dp</dimen>
-    <dimen name="animation_box_large">92dp</dimen>
     <dimen name="animation_box_card">46dp</dimen>
     <dimen name="description_font">15sp</dimen>
 </resources>

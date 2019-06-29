@@ -14,7 +14,6 @@ import com.giphy.sdk.core.models.Media;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
 
-import pw.komarov.giphy.utils.GifImageService;
 import pw.komarov.giphy.utils.GiphyService;
 import pw.komarov.giphy.utils.HttpAsyncTask;
 
@@ -39,7 +38,8 @@ public class RVAdapter extends RecyclerView.Adapter<RVAdapter.GiphyViewHolder> {
 
         giphyViewHolder.tvGiphyId.setText(id);
         giphyViewHolder.tvDescription.setText(giphyItems.get(i).getTitle());
-        GifImageService.loadProcessingAnimation(giphyViewHolder.imgGif);
+        giphyViewHolder.imgGif.setBytes(GiphyApp.getProcessingAnimationBytes());
+        giphyViewHolder.imgGif.startAnimation();
 
         new HttpAsyncTask() {
             @Override

@@ -1,7 +1,6 @@
 package pw.komarov.giphy;
 
 import android.support.annotation.NonNull;
-import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -12,17 +11,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
-
 import com.felipecsl.gifimageview.library.GifImageView;
 import com.giphy.sdk.core.models.enums.MediaType;
 import com.giphy.sdk.core.network.api.CompletionHandler;
 import com.giphy.sdk.core.network.response.ListMediaResponse;
-
-import org.apache.commons.io.IOUtils;
-
-import java.io.IOException;
-import java.io.InputStream;
-
 import pw.komarov.giphy.utils.GiphyService;
 
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener {
@@ -39,6 +31,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(linearLayoutManager);
         recyclerView.setHasFixedSize(true);
+        
     }
 
     protected void setSearchProcessing(boolean isShow) {
